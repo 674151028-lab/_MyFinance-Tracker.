@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>โปรแกรมติดตามการเงินส่วนบุคคล | MyFinance Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blueimp-load-image@5.16.0/js/load-image.all.min.js"></script> 
+    
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+
+    <style>
+        /* ------------------- Global Styles & Responsive Core ------------------- */
+        :root {
+            --primary-color: #059669; /* emerald-600 */
+            --primary-dark: #047857; /* emerald-700 */
+            --bg-color: #f8fafc; /* slate-50 */
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: linear-gradient(to bottom right, var(--bg-color), #e0f7fa); 
+            background-attachment: fixed;
+            overflow-x: hidden; 
+        }
+
+        /* Responsive Container: ใช้ max-w-7xl เพื่อให้หน้าจอยืดได้กว้างขึ้นบน Desktop */
+        .container {
+            max-width: 1280px; 
+            padding-left: 1rem;
+            padding-right: 1rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ------------------- Header/Navbar Styles ------------------- */
+        .header {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-menu {
+            overflow-x: auto; 
+            white-space: nowrap; 
+            padding-bottom: 5px; 
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-btn {
+            padding: 0.6rem 1rem;
+            margin: 0 0.25rem;
+            transition: all 0.2s ease-in-out;
+            flex-shrink: 0;
+            border-radius: 0.5rem;
+        }
+
+        .nav-btn.active {
+            background-color: var(--primary-dark) !important; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        /* ------------------- Mobile Footer Styles ------------------- */
+        .mobile-nav-bar {
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-nav-item {
+            min-width: 50px; 
+        }
+
+        .mobile-nav-item.active {
+            color: var(--primary-color); 
+        }
+
+        /* ------------------- Form/Component Styles ------------------- */
+        .type-toggle-label {
+             /* ปรับความสูง/padding ให้สม่ำเสมอ */
+            padding: 0.8rem 1rem;
+            border-radius: 0.75rem;
+            width: 100%; 
+            margin-bottom: 0.625rem; /* 10px */
+        }
+        
+        @media (min-width: 640px) {
+            .type-toggle-label {
+                width: auto;
+                margin-bottom: 0;
+            }
+        }
+        
+        /* Input with Icon Styling */
+        .input-with-icon input, .input-with-icon select, .input-with-icon textarea { 
+            padding-left: 3rem !important; /* 48px */
+            padding-top: 0.875rem !important; /* 14px */
+            padding-bottom: 0.875rem !important; /* 14px */
+            border-radius: 0.75rem;
+        }
+        
+        /* Transaction Table Styling */
+        .transaction-row:hover { 
+            background-color: #f7fafc; 
+            transform: scale(1.005); 
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); 
+        }
+
+        /* ------------------- Responsive Breakpoints ------------------- */
+        @media (max-width: 1023px) { /* Mobile/Tablet */
+            #nav-menu {
+                display: none !important;
+            }
+            main {
+                padding-bottom: 5rem; 
+            }
+            /* ปรับความสูงกราฟให้เหมาะสมกับ Mobile */
+            .h-80, .h-96 {
+                 height: 20rem !important; /* 320px */
+            }
+             .sm\:text-5xl {
+                 font-size: 2.5rem !important; /* ลดขนาดตัวเลข Card บนจอเล็ก */
+            }
+        }
+        
+        @media (min-width: 1024px) { /* Desktop */
+             .mobile-nav-bar {
+                 display: none !important;
+             }
+        }
+
+        /* ------------------- Print Styles ------------------- */
+        @media print {
+            .header, .nav-menu, .print-button, .filter-area, #logout-btn, .quick-action-btns, #current-time-display, #profile-settings-btn, #user-display-name, .mobile-nav-bar, .reset-data-btn-area, .view-container:not(#print-area-content) { 
+                display: none !important;
+            }
+            body { 
+                margin: 0; 
+                padding: 0; 
+                background-color: #fff !important; 
+                -webkit-print-color-adjust: exact; 
+                color-adjust: exact;
+            }
+            * { 
+                color: #000 !important; 
+                background-color: #fff !important; 
+                box-shadow: none !important; 
+                text-shadow: none !important; 
+            }
+            /* สร้าง Container สำหรับเนื้อหาที่พิมพ์เท่านั้น */
+            body::after {
+                content: '';
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: white;
+                z-index: 9998;
+            }
+            #print-area-content {
+                display: block !important;
+                position: relative;
+                z-index: 9999;
+                padding: 1rem;
+            }
+
+            canvas { max-width: 100% !important; height: auto !important; page-break-inside: avoid; } 
+        }
+    </style>
+</head>
+<body>
+
+    <header class="bg-gradient-to-r from-teal-600 to-green-700 header sticky top-0 z-10">
+        <div class="container py-4 flex flex-col lg:flex-row justify-between items-center">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white flex items-center tracking-wide mb-2 lg:mb-0">
+                <i class="fas fa-wallet mr-3 text-teal-300 transform rotate-[-10deg]"></i> MyFinance <span class="text-teal-200 ml-1">Tracker</span>
+            </h1>
+            <nav id="nav-menu" class="nav-menu flex items-center space-x-1 lg:space-x-2 mt-2 lg:mt-0 w-full lg:w-auto">
+                <button onclick="เปลี่ยนมุมมอง('dashboard')" class="nav-btn active flex-shrink-0 text-white" data-view="dashboard"><i class="fas fa-home mr-2"></i> หน้าหลัก</button>
+                <button onclick="เปลี่ยนมุมมอง('add')" class="nav-btn flex-shrink-0 text-white" data-view="add"><i class="fas fa-plus-circle mr-2"></i> เพิ่มรายการ</button>
+                <button onclick="เปลี่ยนมุมมอง('investment')" class="nav-btn flex-shrink-0 text-white" data-view="investment"><i class="fas fa-chart-line mr-2"></i> ลงทุน</button>
+                <button onclick="เปลี่ยนมุมมอง('history')" class="nav-btn flex-shrink-0 text-white" data-view="history"><i class="fas fa-history mr-2"></i> ประวัติ</button>
+                <button onclick="เปลี่ยนมุมมอง('reports')" class="nav-btn flex-shrink-0 text-white" data-view="reports"><i class="fas fa-chart-pie mr-2"></i> รายงาน</button>
+                
+                <span id="user-display-name" class="text-white font-bold text-lg ml-6 hidden flex items-center bg-teal-800 rounded-full pr-1 py-1 shadow-inner cursor-pointer hover:bg-teal-700 transition duration-200 flex-shrink-0" onclick="เปลี่ยนมุมมอง('profile')">
+                    <img id="profile-pic-nav" src="https://via.placeholder.com/96x96?text=User" alt="Profile" class="h-9 w-9 rounded-full border-2 border-teal-300 mr-2 object-cover">
+                    <span id="display-name-text" class="text-sm truncate max-w-[80px] sm:max-w-[100px] font-semibold"></span>
+                    <button id="profile-settings-btn" class="ml-2 text-teal-300 hover:text-white p-2 rounded-full hover:bg-teal-600 transition duration-150" title="ตั้งค่าโปรไฟล์">
+                        <i class="fas fa-user-cog text-lg"></i>
+                    </button>
+                </span>
+
+                <button onclick="เปลี่ยนมุมมอง('login')" id="auth-btn" class="nav-btn bg-teal-800 hover:bg-teal-900 ml-4 flex-shrink-0 text-white" data-view="login"><i class="fas fa-sign-in-alt mr-2"></i> เข้าสู่ระบบ</button>
+                <button onclick="จัดการออกจากระบบ()" id="logout-btn" class="nav-btn desktop-nav ml-4 hidden flex-shrink-0 text-white" data-view="logout"><i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container py-6 sm:py-10">
+
+        <div id="current-time-display" class="text-right text-gray-500 mb-8 text-sm font-medium">
+            <i class="fas fa-calendar-alt mr-1 text-blue-400"></i> <span id="current-datetime">--</span>
+        </div>
+        
+        
+        <div id="dashboard-view" class="view-container">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-800 flex items-center mb-4 md:mb-0"><i class="fas fa-tachometer-alt mr-4 text-blue-600"></i> สรุปภาพรวมการเงิน</h2>
+            </div>
+            
+            <section class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mb-10">
+                <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-xl border-t-4 border-blue-500 hover:shadow-2xl hover:scale-[1.02] transition duration-300 transform">
+                    <h3 class="text-md sm:text-lg font-semibold text-gray-500 flex items-center"><i class="fas fa-balance-scale-left mr-2 text-blue-500"></i> ยอดคงเหลือสุทธิ</h3>
+                    <p id="net-balance" class="text-3xl sm:text-5xl font-extrabold mt-2 text-blue-600 animate-pulse">฿ 0.00</p>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-2">ยอดรวมรายรับลบรายจ่าย</p>
+                </div>
+                <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-xl border-t-4 border-green-500 hover:shadow-2xl hover:scale-[1.02] transition duration-300 transform"><h3 class="text-md sm:text-lg font-semibold text-gray-500 flex items-center"><i class="fas fa-arrow-up mr-2 text-green-500"></i> รายรับรวม</h3><p id="total-income" class="text-3xl sm:text-5xl font-extrabold mt-2 text-green-600">฿ 0.00</p><p class="text-xs sm:text-sm text-gray-400 mt-2">รายการรายรับทั้งหมดในเดือนนี้</p></div>
+                <div class="bg-white p-5 sm:p-7 rounded-2xl shadow-xl border-t-4 border-red-500 hover:shadow-2xl hover:scale-[1.02] transition duration-300 transform"><h3 class="text-md sm:text-lg font-semibold text-gray-500 flex items-center"><i class="fas fa-arrow-down mr-2 text-red-500"></i> รายจ่ายรวม</h3><p id="total-expense" class="text-3xl sm:text-5xl font-extrabold mt-2 text-red-600">฿ 0.00</p><p class="text-xs sm:text-sm text-gray-400 mt-2">รายการรายจ่ายทั้งหมดในเดือนนี้</p></div>
+            </section>
+            
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8" id="reportArea">
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                    <h3 class="text-xl sm:text-2xl font-bold mb-6 text-gray-700 flex items-center"><i class="fas fa-chart-pie mr-3 text-yellow-600"></i> สรุปรายจ่ายตามหมวดหมู่ (เดือน: <span id="current-month-year" class="text-blue-700 ml-1">...</span>)</h3>
+                    <div class="h-80 sm:h-96 flex items-center justify-center" id="expense-chart-container">
+                        <canvas id="expensePieChart"></canvas>
+                        <div id="expense-chart-loading" class="hidden absolute p-4 bg-white/70 rounded-lg shadow-md"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังโหลดกราฟ...</div>
+                        <div id="expense-chart-empty" class="hidden text-center text-gray-500 py-20"><i class="fas fa-box-open mr-2 text-4xl mb-3 text-red-300"></i><p class="text-xl font-medium">ไม่มีข้อมูลรายจ่ายในเดือนนี้</p><p class="text-sm mt-1">ลองเพิ่มรายการรายจ่ายก่อนนะครับ</p></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl sm:text-2xl font-bold mb-4 text-gray-700 flex items-center"><i class="fas fa-file-invoice-dollar mr-3 text-indigo-600"></i> จัดการรายงานฉบับเต็ม</h3>
+                        <p class="text-gray-600 mb-8 leading-relaxed">เข้าถึงรายงานละเอียดพร้อมกราฟเปรียบเทียบ หรือพิมพ์สรุปหน้านี้เพื่อแชร์ข้อมูลสำคัญ</p>
+                    </div>
+                    <div class="space-y-4 quick-action-btns">
+                        <button onclick="เปลี่ยนมุมมอง('reports')" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 shadow-lg transition duration-200 transform hover:scale-[1.01]"><i class="fas fa-file-alt mr-3"></i> ดูรายงานวิเคราะห์เต็มรูปแบบ</button>
+                        <button onclick="พิมพ์ส่วน('reportArea')" class="w-full inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-xl text-blue-600 bg-blue-50 hover:bg-blue-100 shadow-md transition duration-200 transform hover:scale-[1.01] print-button"><i class="fas fa-print mr-3"></i> พิมพ์สรุปข้อมูลหน้าหลัก</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        
+        <div id="add-view" class="view-container hidden">
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-800 mb-8 flex items-center"><i class="fas fa-plus-circle mr-4 text-green-600"></i> บันทึกรายการใหม่</h2>
+            <div class="max-w-full md:max-w-2xl mx-auto bg-white p-6 sm:p-10 rounded-3xl shadow-2xl">
+                <form id="transaction-form">
+                    <div class="mb-8">
+                        <label class="block text-gray-700 font-bold mb-3 text-sm sm:text-base flex items-center"><i class="fas fa-tag mr-2 text-gray-500"></i> เลือกประเภทรายการ</label>
+                        <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-3 sm:space-y-0">
+                            <label class="flex-1 flex items-center justify-center shadow-lg cursor-pointer type-toggle-label active" id="income-toggle-label">
+                                <input type="radio" name="type" value="รายรับ" class="form-radio h-5 w-5 text-green-600 hidden" checked>
+                                <span class="ml-2 font-bold text-base sm:text-lg text-green-700"><i class="fas fa-hand-holding-usd mr-2"></i> รายรับ</span>
+                            </label>
+                            <label class="flex-1 flex items-center justify-center shadow-lg cursor-pointer type-toggle-label" id="expense-toggle-label">
+                                <input type="radio" name="type" value="รายจ่าย" class="form-radio h-5 w-5 text-red-600 hidden">
+                                <span class="ml-2 font-bold text-base sm:text-lg text-red-700"><i class="fas fa-shopping-bag mr-2"></i> รายจ่าย</span>
+                            </label>
+                            <label class="flex-1 flex items-center justify-center shadow-lg cursor-pointer type-toggle-label" id="investment-toggle-label">
+                                <input type="radio" name="type" value="ลงทุน" class="form-radio h-5 w-5 text-amber-600 hidden">
+                                <span class="ml-2 font-bold text-base sm:text-lg text-amber-700"><i class="fas fa-chart-line mr-2"></i> ลงทุน</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-6 input-with-icon">
+                        <i class="fas fa-coins icon text-2xl"></i>
+                        <input type="number" id="amount" required min="0.01" step="0.01" class="w-full px-4 py-4 border-2 focus:ring-green-500 focus:border-green-500" placeholder="จำนวนเงิน (฿)">
+                    </div>
+                    <div class="mb-6 input-with-icon">
+                        <i class="fas fa-sitemap icon"></i>
+                        <select id="category" required class="w-full px-4 py-4 border-2 focus:ring-green-500 focus:border-green-500"><option value="">-- เลือกหมวดหมู่ --</option></select>
+                    </div>
+                    <div class="mb-6 input-with-icon">
+                        <i class="fas fa-calendar-alt icon"></i>
+                        <input type="date" id="date" required class="w-full px-4 py-4 border-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-8 input-with-icon">
+                        <i class="fas fa-comment-dots icon"></i>
+                        <textarea id="description" rows="3" class="w-full px-4 py-4 border-2 focus:ring-green-500 focus:border-green-500" placeholder="รายละเอียดเพิ่มเติม (เช่น ค่ากาแฟรายวัน)"></textarea>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+                        <button type="button" id="clear-btn" class="flex-1 px-6 py-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:shadow-lg transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-undo mr-2"></i> ล้างข้อมูล</button>
+                        <button type="submit" class="flex-1 px-8 py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-xl transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-paper-plane mr-2"></i> บันทึกรายการ</button>
+                    </div>
+                </form>
+                <p id="message-area" class="mt-6 text-center hidden font-bold text-lg"></p>
+            </div>
+        </div>
+        
+        
+        <div id="investment-view" class="view-container hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-800 flex items-center mb-4 sm:mb-0"><i class="fas fa-chart-line mr-4 text-amber-600"></i> ติดตามการลงทุน/ทรัพย์สิน</h2>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 space-x-0 sm:space-x-3 reset-data-btn-area">
+                    <button type="button" onclick="ยืนยันการลบข้อมูลทั้งหมด('investment')" class="px-5 py-2 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-md transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-bomb mr-2"></i> ลบข้อมูลลงทุน</button>
+                    <button onclick="พิมพ์ส่วน('investment-report-area')" class="px-5 py-2 border border-amber-600 text-amber-600 rounded-xl hover:bg-amber-50 transition duration-150 shadow-md print-button"><i class="fas fa-print mr-2"></i> พิมพ์รายงาน</button>
+                </div>
+            </div>
+            
+            <div id="investment-report-area"> 
+                <section class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-t-4 border-blue-500"><h3 class="text-xs sm:text-md font-semibold text-gray-500 flex items-center"><i class="fas fa-balance-scale-left mr-2 text-blue-500"></i> ยอดคงเหลือสุทธิ (Net Flow)</h3><p id="total-investment-net" class="text-xl sm:text-3xl font-extrabold mt-1 text-blue-600">฿ 0.00</p></div>
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-t-4 border-amber-500"><h3 class="text-xs sm:text-md font-semibold text-gray-500 flex items-center"><i class="fas fa-arrow-alt-circle-right mr-2 text-amber-500"></i> เงินต้น/ซื้อสินทรัพย์</h3><p id="total-investment-in" class="text-xl sm:text-3xl font-extrabold mt-1 text-amber-600">฿ 0.00</p></div>
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-t-4 border-green-500"><h3 class="text-xs sm:text-md font-semibold text-gray-500 flex items-center"><i class="fas fa-money-check-alt mr-2 text-green-500"></i> กำไร (ปันผล/ดอกเบี้ย)</h3><p id="total-investment-profit" class="text-xl sm:text-3xl font-extrabold mt-1 text-green-600">฿ 0.00</p></div>
+                    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-xl border-t-4 border-red-500"><h3 class="text-xs sm:text-md font-semibold text-gray-500 flex items-center"><i class="fas fa-percent mr-2 text-red-500"></i> ค่าธรรมเนียม/ภาษี</h3><p id="total-investment-fee" class="text-xl sm:text-3xl font-extrabold mt-1 text-red-600">฿ 0.00</p></div>
+                </section>
+
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8">
+                    <h3 class="text-xl sm:text-2xl font-bold mb-5 text-gray-700 flex items-center"><i class="fas fa-star mr-3 text-yellow-600"></i> สรุปผลการดำเนินงาน</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 text-center">
+                        <div class="p-4 bg-gray-50 rounded-xl shadow-inner border-l-4 border-purple-500"><p class="text-sm sm:text-lg font-medium text-gray-500">อัตรากำไรต่อเงินต้น (ROI)</p><p id="investment-roi" class="text-3xl sm:text-4xl font-extrabold mt-1 text-purple-600">0.00 %</p></div>
+                        <div class="p-4 bg-gray-50 rounded-xl shadow-inner border-l-4 border-green-500"><p class="text-sm sm:text-lg font-medium text-gray-500">กำไรสุทธิหลังหักค่าธรรมเนียม</p><p id="investment-net-profit" class="text-3xl sm:text-4xl font-extrabold mt-1 text-green-600">฿ 0.00</p></div>
+                         <div class="p-4 bg-gray-50 rounded-xl shadow-inner border-l-4 border-blue-500"><p class="text-sm sm:text-lg font-medium text-gray-500">จำนวนธุรกรรมทั้งหมด</p><p id="investment-total-count" class="text-3xl sm:text-4xl font-extrabold mt-1 text-blue-600">0 รายการ</p></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8">
+                    <h3 class="text-xl sm:text-2xl font-bold mb-6 text-gray-700 flex items-center"><i class="fas fa-chart-area mr-3 text-blue-600"></i> กราฟการเคลื่อนไหวของเงินลงทุนรายเดือน</h3>
+                    <div class="h-80 sm:h-96 flex items-center justify-center" id="investment-chart-container">
+                        <canvas id="investmentLineChart"></canvas>
+                        <div id="investment-chart-empty" class="hidden text-center text-gray-500 py-20"><i class="fas fa-chart-line mr-2 text-4xl mb-3 text-blue-300"></i><p class="text-xl font-medium">ไม่มีข้อมูลสำหรับสร้างกราฟการลงทุน</p></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                    <h3 class="text-xl sm:text-2xl font-bold mb-5 text-gray-700 flex items-center"><i class="fas fa-list-ul mr-3 text-purple-600"></i> รายการธุรกรรมการลงทุนล่าสุด</h3>
+                    <div class="overflow-x-auto"> 
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">วันที่</th>
+                                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">ประเภทธุรกรรม</th>
+                                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">รายละเอียด</th>
+                                    <th class="px-6 py-4 text-right text-sm font-bold text-gray-600 uppercase tracking-wider">จำนวนเงิน (฿)</th>
+                                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investment-list-table" class="bg-white divide-y divide-gray-100">
+                                <tr><td colspan="5" class="p-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังโหลดรายการ...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div id="history-view" class="view-container hidden">
+             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-800 flex items-center mb-4 sm:mb-0"><i class="fas fa-history mr-4 text-yellow-600"></i> รายการย้อนหลังทั้งหมด</h2>
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 space-x-0 sm:space-x-3 reset-data-btn-area">
+                    <button type="button" onclick="ยืนยันการลบข้อมูลทั้งหมด('history')" class="px-5 py-2 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-md transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-bomb mr-2"></i> ลบข้อมูลทั้งหมด</button>
+                </div>
+            </div>
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8 filter-area">
+                <h3 class="text-xl sm:text-2xl font-bold mb-4 flex items-center text-gray-700 border-b pb-3"><i class="fas fa-filter mr-3 text-blue-500"></i> ตัวกรองและค้นหาข้อมูล</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="input-with-icon">
+                        <i class="fas fa-calendar-alt icon"></i>
+                        <input type="month" id="filter-month-year" class="px-4 py-3 border focus:ring-blue-500 focus:border-blue-500 w-full rounded-xl" value="" title="กรองตามเดือน/ปี">
+                    </div>
+                    <div class="input-with-icon">
+                        <i class="fas fa-tag icon"></i>
+                        <select id="filter-category" class="px-4 py-3 border focus:ring-blue-500 focus:border-blue-500 w-full rounded-xl"><option value="">-- กรองตามหมวดหมู่ --</option></select>
+                    </div>
+                     <div class="input-with-icon">
+                        <i class="fas fa-credit-card icon"></i>
+                        <select id="filter-type" class="px-4 py-3 border focus:ring-blue-500 focus:border-blue-500 w-full rounded-xl"><option value="">-- กรองตามประเภท --</option><option value="รายรับ">รายรับ</option><option value="รายจ่าย">รายจ่าย</option><option value="ลงทุน">ลงทุน</option></select>
+                    </div>
+                    <div class="input-with-icon sm:col-span-2">
+                        <i class="fas fa-search icon"></i>
+                        <input type="text" id="search-description" placeholder="ค้นหารายละเอียด..." class="px-4 py-3 border focus:ring-blue-500 focus:border-blue-500 w-full rounded-xl">
+                    </div>
+                </div>
+                <div class="flex flex-col-reverse sm:flex-row justify-end mt-6 space-y-3 sm:space-y-0 sm:space-x-3 space-y-reverse">
+                    <button id="apply-filter-btn" class="px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-filter mr-2"></i> ใช้ตัวกรอง</button>
+                    <button id="export-csv-btn" class="px-5 py-3 border border-green-600 text-green-600 rounded-xl hover:bg-green-50 shadow-lg transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-file-csv mr-2"></i> ส่งออก CSV</button>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                <div class="overflow-x-auto"> 
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">วันที่</th>
+                                <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">ประเภท</th>
+                                <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">หมวดหมู่</th>
+                                <th class="px-6 py-4 text-right text-sm font-bold text-gray-600 uppercase tracking-wider">จำนวนเงิน (฿)</th>
+                                <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">รายละเอียด</th>
+                                <th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase tracking-wider">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-list" class="bg-white divide-y divide-gray-100">
+                            <tr><td colspan="6" class="p-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังโหลดรายการ...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div id="reports-view" class="view-container hidden">
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-800 mb-8 flex items-center"><i class="fas fa-chart-bar mr-4 text-indigo-600"></i> รายงานสรุปการเงิน</h2>
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl mb-8 filter-area">
+                <h3 class="text-xl sm:text-2xl font-bold mb-4 flex items-center text-gray-700 border-b pb-3"><i class="fas fa-calendar-check mr-3 text-indigo-500"></i> เลือกช่วงเวลาสร้างรายงาน</h3>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
+                    <label class="font-bold text-gray-700 flex-shrink-0">เลือกเดือน:</label>
+                    <div class="input-with-icon flex-grow sm:max-w-xs">
+                        <i class="fas fa-calendar-alt icon"></i>
+                        <input type="month" id="report-month-year" class="px-4 py-3 border focus:ring-indigo-500 focus:border-indigo-500 w-full rounded-xl" value="">
+                    </div>
+                    <button id="generate-report-btn" class="flex-shrink-0 px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-lg transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-redo-alt mr-2"></i> สร้างรายงาน</button>
+                    <button onclick="พิมพ์ส่วน('report-report-area')" class="flex-shrink-0 px-6 py-3 border border-indigo-600 text-indigo-600 rounded-xl hover:bg-indigo-50 shadow-lg transition duration-150 transform hover:scale-[1.01] print-button"><i class="fas fa-print mr-2"></i> พิมพ์รายงาน</button>
+                </div>
+            </div>
+            
+            <div id="report-report-area" class="space-y-8">
+                <div id="report-header" class="bg-gradient-to-r from-white to-gray-50 p-6 sm:p-8 rounded-2xl shadow-xl text-center border-t-4 border-indigo-500">
+                    <h3 class="text-xl sm:text-3xl font-extrabold text-gray-800 flex items-center justify-center mb-3" id="report-title"><i class="fas fa-scroll mr-3 text-orange-500"></i> รายงานประจำเดือน...</h3>
+                    <p class="text-gray-600 text-sm sm:text-md">ข้อมูลสรุปรายรับ-รายจ่าย (ไม่รวมรายการลงทุน) สำหรับช่วงเวลาที่เลือก</p>
+                </div>
+                
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                    <h4 class="text-xl sm:text-2xl font-bold mb-5 flex items-center text-gray-700 border-b pb-3"><i class="fas fa-table mr-3 text-blue-600"></i> สรุปยอดรวมทางการเงิน</h4>
+                    <table class="w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50"><tr><th class="px-6 py-4 text-left text-sm font-bold text-gray-600 uppercase">ประเภท</th><th class="px-6 py-4 text-right text-sm font-bold text-gray-600 uppercase">จำนวนเงิน (฿)</th></tr></thead>
+                        <tbody class="bg-white divide-y divide-gray-100" id="summary-table-body">
+                            <tr class="transaction-row"><td class="px-6 py-4 flex items-center text-gray-700 font-semibold text-sm sm:text-base"><i class="fas fa-money-bill-wave mr-3 text-green-500 text-lg"></i> รายรับรวม</td><td class="px-6 py-4 text-right text-green-600 font-extrabold text-lg sm:text-xl" id="report-income">฿ 0.00</td></tr>
+                            <tr class="transaction-row"><td class="px-6 py-4 flex items-center text-gray-700 font-semibold text-sm sm:text-base"><i class="fas fa-shopping-cart mr-3 text-red-500 text-lg"></i> รายจ่ายรวม</td><td class="px-6 py-4 text-right text-red-600 font-extrabold text-lg sm:text-xl" id="report-expense">฿ 0.00</td></tr>
+                            <tr class="bg-blue-50 transaction-row"><td class="px-6 py-4 font-extrabold flex items-center text-gray-800 text-base sm:text-lg"><i class="fas fa-balance-scale-left mr-3 text-blue-500"></i> ยอดคงเหลือสุทธิ</td><td class="px-6 py-4 text-right font-extrabold text-xl sm:text-2xl text-blue-600" id="report-net">฿ 0.00</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                    <h4 class="text-xl sm:text-2xl font-bold mb-6 flex items-center text-gray-700 border-b pb-3"><i class="fas fa-chart-area mr-3 text-purple-600"></i> กราฟเปรียบเทียบการเคลื่อนไหวรายรับ-รายจ่าย (ย้อนหลัง 12 เดือน)</h4>
+                    <div class="h-80 sm:h-96 flex items-center justify-center" id="comparison-chart-container">
+                        <canvas id="comparisonChart"></canvas>
+                        <div id="comparison-chart-empty" class="hidden text-center text-gray-500 py-20"><i class="fas fa-exclamation-triangle mr-2 text-4xl mb-3 text-red-400"></i><p class="text-xl font-medium">ไม่สามารถสร้างกราฟได้</p><p class="text-sm mt-1">โปรดตรวจสอบว่ามีข้อมูลย้อนหลังเพียงพอ</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        <div id="profile-view" class="view-container hidden">
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-gray-800 mb-8 flex items-center"><i class="fas fa-user-cog mr-4 text-purple-600"></i> ตั้งค่าโปรไฟล์</h2>
+            <div class="max-w-full md:max-w-xl mx-auto bg-white p-6 sm:p-10 rounded-3xl shadow-2xl">
+                <div class="text-center mb-8">
+                    <img id="current-profile-pic" src="https://via.placeholder.com/96x96?text=User" alt="Profile Picture" class="w-28 h-28 sm:w-32 sm:h-32 rounded-full mx-auto mb-4 border-6 border-purple-400 object-cover shadow-xl transition duration-300 hover:scale-105">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gray-800" id="profile-email-display">user@email.com</h3>
+                </div>
+
+                <form id="profile-settings-form">
+                    <div class="mb-6 input-with-icon">
+                        <i class="fas fa-user-tag icon"></i>
+                        <label for="new-display-name" class="block text-gray-700 font-semibold mb-2 flex items-center sr-only">ชื่อที่ใช้แสดง</label>
+                        <input type="text" id="new-display-name" class="w-full px-4 py-4 border-2 focus:ring-purple-500 focus:border-purple-500" placeholder="ชื่อที่ใช้แสดงของคุณ">
+                    </div>
+                    
+                    <div class="mb-8 input-with-icon">
+                        <i class="fas fa-image icon"></i>
+                        <label for="profile-pic-input" class="block text-gray-700 font-semibold mb-2 flex items-center sr-only">เปลี่ยนรูปโปรไฟล์</label>
+                        <input type="file" id="profile-pic-input" accept="image/*" class="w-full px-4 py-4 border-2 focus:ring-purple-500 focus:border-purple-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer">
+                        <p class="text-xs text-gray-500 mt-2 ml-10">ระบบจะลดขนาดรูปภาพ (สูงสุด 200x200px) ก่อนบันทึก</p>
+                    </div>
+                    
+                    <div class="flex justify-end mt-10 space-x-4">
+                        <button type="submit" class="px-8 py-4 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 shadow-xl transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-save mr-2"></i> บันทึกการตั้งค่า</button>
+                    </div>
+                </form>
+                <p id="profile-message-area" class="mt-6 text-center hidden font-bold text-lg"></p>
+            </div>
+        </div>
+        
+        </main>
+
+    <div id="mobile-nav-bar" class="mobile-nav-bar fixed inset-x-0 bottom-0 bg-white border-t border-gray-200 z-40 lg:hidden">
+        <div class="flex justify-around items-center h-[70px]">
+            <button data-view="dashboard" class="mobile-nav-item active">
+                <i class="fas fa-home"></i>
+                <span class="text-xs mt-1">หน้าหลัก</span>
+            </button>
+            <button data-view="add" class="mobile-nav-item">
+                <i class="fas fa-plus-circle"></i>
+                <span class="text-xs mt-1">เพิ่มรายการ</span>
+            </button>
+            <button data-view="investment" class="mobile-nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span class="text-xs mt-1">ลงทุน</span>
+            </button>
+             <button data-view="history" class="mobile-nav-item">
+                <i class="fas fa-history"></i>
+                <span class="text-xs mt-1">ประวัติ</span>
+            </button>
+            <button data-view="profile" class="mobile-nav-item">
+                <i class="fas fa-user-cog"></i>
+                <span class="text-xs mt-1">ตั้งค่า</span>
+            </button>
+             <button data-view="logout" id="logout-mobile-btn" class="mobile-nav-item hidden">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="text-xs mt-1 text-red-600">ออก</span>
+            </button>
+        </div>
+    </div>
+    
+    
+    <div id="auth-view-container" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 backdrop-blur-sm px-4">
+        
+        <div id="login-view" class="w-full max-w-xs sm:max-w-md bg-white p-6 sm:p-10 rounded-3xl shadow-2xl transform transition duration-500 scale-100 border-t-8 border-green-500">
+             <div class="text-center mb-8"><h1 class="text-3xl sm:text-4xl font-extrabold text-green-600 flex items-center justify-center"><i class="fas fa-lock mr-3"></i> เข้าสู่ระบบ</h1><p class="text-gray-600 mt-2 text-sm sm:text-lg">ยินดีต้อนรับกลับสู่ MyFinance Tracker</p></div>
+            <form id="login-form">
+                <div class="mb-6 input-with-icon">
+                    <i class="fas fa-at icon"></i>
+                    <label for="login-email" class="block text-gray-700 font-semibold mb-2 flex items-center sr-only">อีเมล</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-4 border-2 focus:ring-green-500 focus:border-green-500" placeholder="your@email.com" value="user@test.com">
+                </div>
+                <div class="mb-8 input-with-icon">
+                    <i class="fas fa-key icon"></i>
+                    <label for="login-password" class="block text-gray-700 font-semibold mb-2 flex items-center sr-only">รหัสผ่าน</label>
+                    <input type="password" id="login-password" required minlength="6" class="w-full px-4 py-4 border-2 focus:ring-green-500 focus:border-green-500" placeholder="••••••••" value="123456">
+                </div>
+                <button type="submit" class="w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-xl transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-sign-in-alt mr-2"></i> เข้าสู่ระบบ</button>
+                <p id="auth-error-msg" class="text-red-500 text-center mt-4 hidden font-medium text-lg">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
+            </form>
+            <p class="text-center text-gray-600 mt-6 text-md">ยังไม่มีบัญชี? <button onclick="แสดงสมัครสมาชิก()" class="text-blue-600 hover:text-blue-800 font-bold transition duration-150">สมัครสมาชิก</button></p>
+        </div>
+        
+        <div id="register-view" class="w-full max-w-xs sm:max-w-md bg-white p-6 sm:p-10 rounded-3xl shadow-2xl hidden transform transition duration-500 scale-95 border-t-8 border-blue-500">
+            <div class="text-center mb-8"><h1 class="text-3xl sm:text-4xl font-extrabold text-blue-600 flex items-center justify-center"><i class="fas fa-user-plus mr-3"></i> สร้างบัญชี</h1><p class="text-gray-600 mt-2 text-sm sm:text-lg">เริ่มต้นจัดการการเงินของคุณได้ทันที</p></div>
+            <form id="register-form">
+                <div class="mb-6 input-with-icon">
+                    <i class="fas fa-at icon"></i>
+                    <label for="register-email" class="block text-gray-700 font-semibold mb-2 flex items-center sr-only">อีเมล</label>
+                    <input type="email" id="register-email" required class="w-full px-4 py-4 border-2 focus:ring-blue-500 focus:border-blue-500" placeholder="your@email.com">
+                </div>
+                <div class="mb-8 input-with-icon">
+                    <i class="fas fa-key icon"></i>
+                    <label for="register-password" class="block text-gray-700 font-semibold mb-2 flex items-center sr-only">รหัสผ่าน</label>
+                    <input type="password" id="register-password" required minlength="6" class="w-full px-4 py-4 border-2 focus:ring-blue-500 focus:border-blue-500" placeholder="ขั้นต่ำ 6 ตัวอักษร">
+                </div>
+                <button type="submit" class="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-xl transition duration-150 transform hover:scale-[1.01]"><i class="fas fa-user-plus mr-2"></i> สมัครสมาชิก</button>
+                <p id="reg-error-msg" class="text-red-500 text-center mt-4 hidden font-medium text-lg">การสมัครสมาชิกล้มเหลว</p>
+            </form>
+            <p class="text-center text-gray-600 mt-6 text-md">มีบัญชีอยู่แล้ว? <button onclick="แสดงเข้าสู่ระบบ()" class="text-green-600 hover:text-green-800 font-bold transition duration-150">เข้าสู่ระบบ</button></p>
+        </div>
+    </div>
+
+
+    <script>
+        // =========================================================
+        //             โค้ด J A V A S C R I P T ภาษาไทย (ฉบับสมบูรณ์)
+        // =========================================================
+        
+        // ใช้ IIFE เพื่อป้องกัน Global Scope Pollution
+        (function() {
+            const คีย์_พื้นที่เก็บข้อมูลท้องถิ่น = 'finance_transactions_mock';
+            const คีย์_ผู้ใช้ปัจจุบัน = 'current_user'; 
+            const สี_แผนภูมิ = ['#4BC0C0', '#FF6384', '#36A2EB', '#FFCE56', '#9966FF', '#FF9F40', '#E7E9ED', '#4CAF50'];
+            const หมวดหมู่ = {
+                'รายรับ': ['เงินเดือน', 'โบนัส', 'รายได้เสริม', 'ปันผล/ดอกเบี้ย', 'ของขวัญ', 'อื่น ๆ'],
+                'รายจ่าย': ['อาหาร', 'เดินทาง', 'ที่พัก/บิล', 'บันเทิง', 'ช้อปปิ้ง', 'สุขภาพ', 'การศึกษา', 'อื่น ๆ'],
+                'ลงทุน': ['เงินต้น/ลงทุนเพิ่ม (ซื้อหุ้น/ฝากเงิน)', 'เงินจากการขาย/ถอนคืน', 'กำไร (ปันผล/ดอกเบี้ย)', 'ค่าธรรมเนียม/ภาษี', 'ทรัพย์สินอื่นๆ']
+            };
+
+            let มุมมอง_ปัจจุบัน = 'dashboard';
+            let รายการ_ทั้งหมด = []; 
+            let แผนภูมิเปรียบเทียบ_instance = null; 
+            let แผนภูมิวงกลม_instance = null; 
+            let แผนภูมิลงทุน_instance = null;
+            
+            // --- 2. ฟังก์ชันอำนวยความสะดวก (Utility Functions) ---
+
+            function จัดรูปแบบสกุลเงิน(amount) {
+                if (typeof amount !== 'number' || isNaN(amount)) return '฿ 0.00';
+                return `฿ ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+            }
+
+            function รับเดือนและปีปัจจุบัน(date = new Date()) {
+                const options = { year: 'numeric', month: 'long' };
+                return date.toLocaleDateString('th-TH', options);
+            }
+            
+            function แสดงข้อความแจ้งเตือน(elementId, msg, type) {
+                const element = document.getElementById(elementId);
+                element.textContent = msg;
+                element.classList.remove('hidden', 'text-green-600', 'text-red-600', 'text-lg'); 
+                element.classList.add('font-bold', 'text-lg'); 
+                element.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+                setTimeout(() => { element.classList.add('hidden'); }, 4000);
+            }
+
+            function อัปเดตวันที่และเวลา() {
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('th-TH', { 
+                    year: 'numeric', month: 'long', day: 'numeric' 
+                });
+                const timeStr = now.toLocaleTimeString('th-TH', { 
+                    hour: '2-digit', minute: '2-digit', second: '2-digit' 
+                });
+                const element = document.getElementById('current-datetime');
+                if (element) element.textContent = `${dateStr} เวลา ${timeStr}`;
+            }
+
+            // --- 3. การจัดการข้อมูล/พื้นที่เก็บข้อมูลท้องถิ่น (Database Layer) ---
+            
+            function รับUserKey(keySuffix = '') {
+                const userEmail = localStorage.getItem(คีย์_ผู้ใช้ปัจจุบัน);
+                if (!userEmail) { return คีย์_พื้นที่เก็บข้อมูลท้องถิ่น + keySuffix; }
+                const safeEmail = userEmail.replace(/[^a-zA-Z0-9]/g, '_');
+                return `${คีย์_พื้นที่เก็บข้อมูลท้องถิ่น}_${safeEmail}${keySuffix}`;
+            }
+
+            function โหลดรายการ() {
+                const userKey = รับUserKey();
+                const data = localStorage.getItem(userKey);
+                รายการ_ทั้งหมด = data ? JSON.parse(data).map(t => ({
+                     ...t,
+                     // ตรวจสอบให้แน่ใจว่า amount เป็น number เสมอ
+                     amount: parseFloat(t.amount) 
+                })) : [];
+            }
+
+            function บันทึกรายการ() {
+                const userKey = รับUserKey();
+                localStorage.setItem(userKey, JSON.stringify(รายการ_ทั้งหมด));
+            }
+
+            function เพิ่มรายการ(data) {
+                const รายการ_ใหม่ = { ...data, id: Date.now(), amount: parseFloat(data.amount) };
+                รายการ_ทั้งหมด.push(รายการ_ใหม่);
+                บันทึกรายการ();
+                return รายการ_ใหม่;
+            }
+            
+            function ลบรายการ(id) {
+                const ความยาวเริ่มต้น = รายการ_ทั้งหมด.length;
+                รายการ_ทั้งหมด = รายการ_ทั้งหมด.filter(t => t.id !== id);
+                บันทึกรายการ();
+                return รายการ_ทั้งหมด.length < ความยาวเริ่มต้น;
+            }
+            
+            // --- Mock Data Generator (ปรับปรุงให้ดีขึ้น) ---
+            
+            function สร้างRandomTransaction(type, date, categories) {
+                const category = categories[Math.floor(Math.random() * categories.length)];
+                let amount = 0;
+                let description = '';
+                
+                if (type === 'รายรับ') {
+                    amount = Math.floor(Math.random() * 5000) + 500;
+                    description = `Source ${category.split('/')[0]}`;
+                } else if (type === 'รายจ่าย') {
+                    amount = Math.floor(Math.random() * 2000) + 100;
+                    description = `Buying ${category}`;
+                } else if (type === 'ลงทุน') {
+                     if (category.includes('เงินต้น')) {
+                         amount = Math.floor(Math.random() * 5000) + 1000;
+                         description = 'Monthly Stock Buy';
+                     } else if (category.includes('กำไร')) {
+                         amount = Math.floor(Math.random() * 1000) + 50;
+                         description = 'Dividend Received';
+                     } else {
+                         amount = Math.floor(Math.random() * 500) + 10;
+                         description = 'Trade Fee';
+                     }
+                }
+                
+                return {
+                    id: Date.now() + Math.random(),
+                    type,
+                    category,
+                    amount: parseFloat(amount.toFixed(2)),
+                    date,
+                    description
+                };
+            }
+
+            function สร้างMockDataสำหรับUserTest(email) {
+                 const keyInitialized = รับUserKey('_initialized');
+                 
+                 // สร้างข้อมูล mock 12 เดือนสำหรับ user@test.com ที่ยังไม่มีข้อมูล
+                 if (email === 'user@test.com' && !localStorage.getItem(keyInitialized)) {
+                    
+                    const today = new Date();
+                    รายการ_ทั้งหมด = [];
+                    
+                    for (let i = 0; i < 12; i++) {
+                        const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 15);
+                        const dateString = monthDate.toISOString().slice(0, 10);
+                        
+                        // รายรับ (เงินเดือน 1 ครั้ง/เดือน)
+                        รายการ_ทั้งหมด.push(สร้างRandomTransaction('รายรับ', dateString, ['เงินเดือน']));
+                        
+                        // รายจ่าย (5-10 รายการ/เดือน)
+                        for (let j = 0; j < Math.floor(Math.random() * 6) + 5; j++) {
+                           รายการ_ทั้งหมด.push(สร้างRandomTransaction('รายจ่าย', dateString, หมวดหมู่['รายจ่าย']));
+                        }
+                        
+                        // ลงทุน (1-3 รายการ/เดือน)
+                         for (let j = 0; j < Math.floor(Math.random() * 3) + 1; j++) {
+                           รายการ_ทั้งหมด.push(สร้างRandomTransaction('ลงทุน', dateString, หมวดหมู่['ลงทุน']));
+                        }
+                    }
+
+                    บันทึกรายการ();
+                    localStorage.setItem(keyInitialized, 'true');
+                 } else {
+                     โหลดรายการ();
+                 }
+            }
+
+
+            // --- 4. การจัดการผู้ใช้/มุมมอง (Auth/View Management) ---
+            
+            function แปลงอีเมลเป็นชื่อแสดง(email) {
+                if (!email) return 'ผู้เยี่ยมชม';
+                let name = email.split('@')[0];
+                return name.charAt(0).toUpperCase() + name.slice(1);
+            }
+
+            function โหลดข้อมูลเฉพาะผู้ใช้(email) {
+                const safeEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
+                const keyDisplayName = `user_display_name_${safeEmail}`;
+                const keyProfilePic = `user_profile_pic_${safeEmail}`;
+                
+                const ชื่อ_แสดง = localStorage.getItem(keyDisplayName) || แปลงอีเมลเป็นชื่อแสดง(email);
+                const รูป_โปรไฟล์ = localStorage.getItem(keyProfilePic) || 'https://via.placeholder.com/96x96?text=User'; 
+
+                return { ชื่อ_แสดง, รูป_โปรไฟล์, keyDisplayName, keyProfilePic };
+            }
+
+            function ตรวจสอบสถานะผู้ใช้() {
+                const ผู้ใช้ = localStorage.getItem(คีย์_ผู้ใช้ปัจจุบัน);
+                const ภาชนะ_auth = document.getElementById('auth-view-container');
+                const ปุ่ม_auth = document.getElementById('auth-btn');
+                const ปุ่ม_logout = document.getElementById('logout-btn');
+                const ภาชนะ_ชื่อผู้ใช้ = document.getElementById('user-display-name');
+                const ข้อความ_ชื่อผู้ใช้ = document.getElementById('display-name-text');
+                const รูป_โปรไฟล์_nav = document.getElementById('profile-pic-nav'); 
+                const mobile_logout_btn = document.querySelector('#logout-mobile-btn');
+                const mobile_profile_btn = document.querySelector('.mobile-nav-item[data-view="profile"]');
+
+
+                if (ผู้ใช้) {
+                    ภาชนะ_auth.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                    ปุ่ม_auth.classList.add('hidden');
+                    ปุ่ม_logout.classList.remove('hidden');
+                    
+                    const { ชื่อ_แสดง, รูป_โปรไฟล์ } = โหลดข้อมูลเฉพาะผู้ใช้(ผู้ใช้);
+                    
+                    ข้อความ_ชื่อผู้ใช้.textContent = ชื่อ_แสดง;
+                    รูป_โปรไฟล์_nav.src = รูป_โปรไฟล์; 
+                    
+                    ภาชนะ_ชื่อผู้ใช้.classList.remove('hidden');
+                    mobile_logout_btn.classList.remove('hidden');
+                    mobile_profile_btn.classList.remove('hidden');
+                    
+                    // โหลดข้อมูลเฉพาะผู้ใช้นี้ (รวมถึงสร้าง mock data หากจำเป็น)
+                    สร้างMockDataสำหรับUserTest(ผู้ใช้);
+                    
+                    // เปลี่ยนมุมมองไปยัง Dashboard หรือมุมมองเดิม
+                    const targetView = มุมมอง_ปัจจุบัน === 'login' || มุมมอง_ปัจจุบัน === 'register' || มุมมอง_ปัจจุบัน === 'auth' ? 'dashboard' : มุมมอง_ปัจจุบัน;
+                    เปลี่ยนมุมมอง(targetView); 
+                    
+                    if (!window.timeUpdateInterval) {
+                         window.timeUpdateInterval = setInterval(อัปเดตวันที่และเวลา, 1000); 
+                    }
+                   
+                } else {
+                    // สถานะ: ยังไม่ได้เข้าสู่ระบบ
+                    ภาชนะ_auth.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden'); 
+                    ปุ่ม_auth.classList.remove('hidden');
+                    ปุ่ม_logout.classList.add('hidden');
+                    ภาชนะ_ชื่อผู้ใช้.classList.add('hidden'); 
+                    
+                    // ซ่อนปุ่มที่ไม่เกี่ยวข้องกับการ Auth บนมือถือ
+                    mobile_logout_btn.classList.add('hidden');
+                    mobile_profile_btn.classList.add('hidden');
+
+                    document.querySelectorAll('.view-container').forEach(v => v.classList.add('hidden'));
+                    
+                    if (window.timeUpdateInterval) { 
+                        clearInterval(window.timeUpdateInterval);
+                        window.timeUpdateInterval = null;
+                    }
+                    
+                    แสดงเข้าสู่ระบบ(); 
+                }
+            }
+
+            function แสดงเข้าสู่ระบบ() {
+                มุมมอง_ปัจจุบัน = 'login';
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('register-view').classList.add('hidden');
+                document.getElementById('login-view').classList.add('scale-100');
+                document.getElementById('register-view').classList.remove('scale-95');
+            }
+
+            function แสดงสมัครสมาชิก() {
+                มุมมอง_ปัจจุบัน = 'register';
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('register-view').classList.remove('hidden');
+                document.getElementById('login-view').classList.remove('scale-100');
+                document.getElementById('register-view').classList.add('scale-95');
+            }
+            
+            function จัดการเข้าสู่ระบบ(e) {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value.toLowerCase();
+                const password = document.getElementById('login-password').value;
+                const errorMsg = document.getElementById('auth-error-msg');
+                
+                // Mock Auth: ตรวจสอบเฉพาะความยาว
+                if (email.length < 5 || password.length < 6) {
+                    errorMsg.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                
+                // ตรวจสอบรหัสผ่าน mock (ถ้าไม่ใช่ user@test.com ให้ถือว่าผ่าน)
+                 if (email === 'user@test.com' && password !== '123456') {
+                    errorMsg.textContent = 'รหัสผ่านไม่ถูกต้องสำหรับ user@test.com';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                
+                localStorage.setItem(คีย์_ผู้ใช้ปัจจุบัน, email);
+                
+                // ตั้งค่าชื่อแสดงผลเริ่มต้น
+                const { keyDisplayName } = โหลดข้อมูลเฉพาะผู้ใช้(email);
+                if (!localStorage.getItem(keyDisplayName)) {
+                    localStorage.setItem(keyDisplayName, แปลงอีเมลเป็นชื่อแสดง(email));
+                }
+                
+                errorMsg.classList.add('hidden');
+                ตรวจสอบสถานะผู้ใช้();
+            }
+
+            function จัดการสมัครสมาชิก(e) {
+                e.preventDefault();
+                const email = document.getElementById('register-email').value.toLowerCase();
+                const password = document.getElementById('register-password').value;
+                const errorMsg = document.getElementById('reg-error-msg');
+
+                if (email.length < 5 || password.length < 6) {
+                    errorMsg.textContent = 'กรุณากรอกอีเมลและรหัสผ่านขั้นต่ำ 6 ตัวอักษร';
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+                
+                localStorage.setItem(คีย์_ผู้ใช้ปัจจุบัน, email);
+                
+                const { keyDisplayName } = โหลดข้อมูลเฉพาะผู้ใช้(email);
+                localStorage.setItem(keyDisplayName, แปลงอีเมลเป็นชื่อแสดง(email));
+                
+                รายการ_ทั้งหมด = [];
+                บันทึกรายการ(); 
+                
+                errorMsg.classList.add('hidden');
+                ตรวจสอบสถานะผู้ใช้();
+            }
+
+            function จัดการออกจากระบบ() {
+                localStorage.removeItem(คีย์_ผู้ใช้ปัจจุบัน); 
+                ตรวจสอบสถานะผู้ใช้();
+            }
+            
+            function เปลี่ยนมุมมอง(viewId) {
+                // อัปเดต Nav State ก่อนเสมอ
+                document.querySelectorAll('.nav-btn, .mobile-nav-item').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.view === viewId) { 
+                        btn.classList.add('active');
+                    }
+                });
+
+                // ซ่อนทุก view container
+                document.querySelectorAll('.view-container').forEach(v => v.classList.add('hidden'));
+                const targetView = document.getElementById(viewId + '-view');
+                if (targetView) targetView.classList.remove('hidden');
+                
+                // ตรวจสอบ Auth (เผื่อผู้ใช้ลองพิมพ์ URL ตรงๆ)
+                if (!localStorage.getItem(คีย์_ผู้ใช้ปัจจุบัน) && viewId !== 'login' && viewId !== 'register') {
+                    // ถ้ายังไม่ Login ให้แสดงหน้า Login
+                    if (viewId !== 'dashboard') {
+                        return เปลี่ยนมุมมอง('login');
+                    }
+                }
+                
+                มุมมอง_ปัจจุบัน = viewId;
+
+                // เรียกโหลดข้อมูลตาม View
+                if (viewId === 'dashboard') โหลดข้อมูลหน้าหลัก();
+                if (viewId === 'add') ตั้งค่าฟอร์มเพิ่มรายการ();
+                if (viewId === 'investment') โหลดข้อมูลการลงทุน(); 
+                if (viewId === 'history') โหลดประวัติรายการ();
+                if (viewId === 'reports') สร้างรายงาน();
+                if (viewId === 'profile') โหลดข้อมูลโปรไฟล์(); 
+            }
+
+
+            // --- 5. Logic หน้าหลัก (Dashboard Logic) ---
+
+            function โหลดข้อมูลหน้าหลัก() {
+                อัปเดตวันที่และเวลา();
+                
+                const now = new Date();
+                const รายการ_เดือนปัจจุบัน = รายการ_ทั้งหมด.filter(t => {
+                    const tDate = new Date(t.date);
+                    const isCurrentMonth = tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+                    return isCurrentMonth && t.type !== 'ลงทุน'; 
+                });
+
+                let รายรับ_รวม = 0;
+                let รายจ่าย_รวม = 0;
+                const รายจ่าย_ตามหมวดหมู่ = {};
+
+                รายการ_เดือนปัจจุบัน.forEach(t => {
+                    if (t.type === 'รายรับ') {
+                        รายรับ_รวม += t.amount;
+                    } else { 
+                        รายจ่าย_รวม += t.amount;
+                        รายจ่าย_ตามหมวดหมู่[t.category] = (รายจ่าย_ตามหมวดหมู่[t.category] || 0) + t.amount;
+                    }
+                });
+
+                const ยอดคงเหลือ_สุทธิ = รายรับ_รวม - รายจ่าย_รวม;
+                document.getElementById('current-month-year').textContent = รับเดือนและปีปัจจุบัน(now);
+
+                document.getElementById('total-income').textContent = จัดรูปแบบสกุลเงิน(รายรับ_รวม);
+                document.getElementById('total-expense').textContent = จัดรูปแบบสกุลเงิน(รายจ่าย_รวม);
+                document.getElementById('net-balance').textContent = จัดรูปแบบสกุลเงิน(ยอดคงเหลือ_สุทธิ);
+                
+                const องค์ประกอบ_ยอดคงเหลือ = document.getElementById('net-balance');
+                องค์ประกอบ_ยอดคงเหลือ.classList.remove('text-blue-600', 'text-red-600', 'text-green-600', 'animate-pulse');
+                องค์ประกอบ_ยอดคงเหลือ.classList.add(ยอดคงเหลือ_สุทธิ > 0 ? 'text-green-600' : ยอดคงเหลือ_สุทธิ < 0 ? 'text-red-600' : 'text-blue-600');
+                if (ยอดคงเหลือ_สุทธิ >= 0) {
+                     องค์ประกอบ_ยอดคงเหลือ.classList.remove('animate-pulse'); // หยุด animation เมื่อไม่ใช่ลบ
+                }
+
+                แสดงแผนภูมิรายจ่าย(รายจ่าย_ตามหมวดหมู่);
+            }
+
+            function แสดงแผนภูมิรายจ่าย(data) {
+                if (แผนภูมิวงกลม_instance) แผนภูมิวงกลม_instance.destroy();
+                
+                const หมวดหมู่_labels = Object.keys(data);
+                const จำนวนเงิน_values = Object.values(data);
+                const container = document.getElementById('expense-chart-container');
+                let องค์ประกอบ_canvas = document.getElementById('expensePieChart');
+                
+                // จัดการ Empty State
+                document.getElementById('expense-chart-empty').classList.add('hidden');
+                if (หมวดหมู่_labels.length === 0) {
+                    องค์ประกอบ_canvas.classList.add('hidden');
+                    document.getElementById('expense-chart-empty').classList.remove('hidden');
+                    return;
+                }
+                องค์ประกอบ_canvas.classList.remove('hidden');
+
+
+                const ctx = องค์ประกอบ_canvas.getContext('2d');
+                
+                แผนภูมิวงกลม_instance = new Chart(ctx, {
+                    type: 'doughnut', 
+                    data: {
+                        labels: หมวดหมู่_labels,
+                        datasets: [{
+                            data: จำนวนเงิน_values,
+                            backgroundColor: สี_แผนภูมิ.slice(0, หมวดหมู่_labels.length),
+                            hoverOffset: 8,
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, 
+                        plugins: {
+                            legend: { position: 'right', labels: { boxWidth: 15, padding: 20 } },
+                            title: { display: false },
+                            datalabels: { // **เพิ่ม Plugin Datalabels**
+                                formatter: (value, ctx) => {
+                                    let sum = 0;
+                                    let dataArr = ctx.chart.data.datasets[0].data;
+                                    dataArr.map(data => { sum += data; });
+                                    let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                    return percentage;
+                                },
+                                color: '#fff',
+                                font: { weight: 'bold', size: 12 }
+                            }
+                        }
+                    },
+                    plugins: [ChartDataLabels] // **Register Datalabels Plugin**
+                });
+            }
+
+
+            // --- 6. Logic เพิ่มรายการ (Add Transaction Logic) ---
+
+            function โหลดหมวดหมู่(type) {
+                const ตัวเลือก_หมวดหมู่ = document.getElementById('category');
+                ตัวเลือก_หมวดหมู่.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
+                const รายการ_หมวดหมู่ = หมวดหมู่[type] || [];
+                รายการ_หมวดหมู่.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    ตัวเลือก_หมวดหมู่.appendChild(option);
+                });
+            }
+
+            function ตั้งค่าฟอร์มเพิ่มรายการ() {
+                const form = document.getElementById('transaction-form');
+                const อินพุต_วันที่ = document.getElementById('date');
+                const อินพุต_ประเภท = document.querySelectorAll('input[name="type"]');
+                
+                อินพุต_วันที่.value = new Date().toISOString().slice(0, 10);
+                
+                const incomeLabel = document.getElementById('income-toggle-label');
+                const expenseLabel = document.getElementById('expense-toggle-label');
+                const investmentLabel = document.getElementById('investment-toggle-label');
+                
+                function อัปเดตสถานะปุ่มประเภท(selectedType) {
+                    incomeLabel.classList.remove('active');
+                    expenseLabel.classList.remove('active');
+                    investmentLabel.classList.remove('active');
+
+                    if (selectedType === 'รายรับ') incomeLabel.classList.add('active');
+                    else if (selectedType === 'รายจ่าย') expenseLabel.classList.add('active');
+                    else if (selectedType === 'ลงทุน') investmentLabel.classList.add('active');
+                    
+                    โหลดหมวดหมู่(selectedType); 
+                }
+
+                const checkedInput = document.querySelector('input[name="type"]:checked');
+                if (checkedInput) {
+                    อัปเดตสถานะปุ่มประเภท(checkedInput.value);
+                } else {
+                     document.querySelector('input[value="รายรับ"]').checked = true;
+                     อัปเดตสถานะปุ่มประเภท('รายรับ');
+                }
+                
+                อินพุต_ประเภท.forEach(input => {
+                    input.onchange = (e) => {
+                        อัปเดตสถานะปุ่มประเภท(e.target.value);
+                    };
+                });
+                
+                document.getElementById('income-toggle-label').onclick = () => document.querySelector('input[value="รายรับ"]').checked = true;
+                document.getElementById('expense-toggle-label').onclick = () => document.querySelector('input[value="รายจ่าย"]').checked = true;
+                document.getElementById('investment-toggle-label').onclick = () => document.querySelector('input[value="ลงทุน"]').checked = true;
+
+
+                form.onsubmit = จัดการส่งฟอร์มเพิ่มรายการ;
+                
+                document.getElementById('clear-btn').onclick = () => {
+                    form.reset();
+                    อินพุต_วันที่.value = new Date().toISOString().slice(0, 10);
+                    document.querySelector('input[value="รายรับ"]').checked = true;
+                    ตั้งค่าฟอร์มเพิ่มรายการ(); 
+                };
+            }
+
+            function จัดการส่งฟอร์มเพิ่มรายการ(e) {
+                e.preventDefault();
+                
+                let selectedType = document.querySelector('input[name="type"]:checked').value;
+
+                const data = {
+                    type: selectedType,
+                    amount: document.getElementById('amount').value,
+                    category: document.getElementById('category').value,
+                    date: document.getElementById('date').value,
+                    description: document.getElementById('description').value.trim()
+                };
+
+                if (!data.category) {
+                    แสดงข้อความแจ้งเตือน('message-area', 'กรุณาเลือกหมวดหมู่', 'error');
+                    return;
+                }
+                if (parseFloat(data.amount) <= 0) {
+                    แสดงข้อความแจ้งเตือน('message-area', 'จำนวนเงินต้องมากกว่า 0', 'error');
+                    return;
+                }
+                
+                เพิ่มรายการ(data);
+                แสดงข้อความแจ้งเตือน('message-area', 'บันทึกรายการเรียบร้อยแล้ว!', 'success');
+                
+                document.getElementById('transaction-form').reset();
+                document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+                document.querySelector('input[value="รายรับ"]').checked = true;
+                
+                ตั้งค่าฟอร์มเพิ่มรายการ(); 
+                
+                // อัปเดตข้อมูลใน View ที่เกี่ยวข้องทันที
+                if (มุมมอง_ปัจจุบัน === 'dashboard') โหลดข้อมูลหน้าหลัก();
+                if (มุมมอง_ปัจจุบัน === 'history') โหลดประวัติรายการ();
+                if (มุมมอง_ปัจจุบัน === 'investment') โหลดข้อมูลการลงทุน();
+            }
+            
+            // --- 7. Logic การลงทุน (Investment Logic) ---
+            
+            function โหลดข้อมูลการลงทุน() {
+                const รายการ_ลงทุน = รายการ_ทั้งหมด.filter(t => t.type === 'ลงทุน').sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                let ยอด_ลงทุน_สุทธิ = 0;
+                let ยอด_เงินต้น_รวม = 0; 
+                let ยอด_กำไร_รวม = 0;    
+                let ยอด_ค่าธรรมเนียม = 0;
+                
+                const ตาราง_body = document.getElementById('investment-list-table');
+                ตาราง_body.innerHTML = '';
+
+                if (รายการ_ลงทุน.length === 0) {
+                     ตาราง_body.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500"><i class="fas fa-box-open mr-2 text-3xl mb-1 text-amber-300"></i><p>ไม่มีรายการลงทุน</p></td></tr>';
+                }
+                
+                รายการ_ลงทุน.forEach(t => {
+                    let คลาส_จำนวนเงิน = 'text-blue-600'; 
+                    let เครื่องหมาย = '';
+
+                    // ปรับการคำนวณ: Net Flow คือ เงินเข้าทั้งหมด - เงินออกทั้งหมด
+                    if (t.category.includes('เงินต้น/ลงทุนเพิ่ม') || t.category.includes('ทรัพย์สินอื่นๆ')) {
+                        ยอด_ลงทุน_สุทธิ -= t.amount; 
+                        ยอด_เงินต้น_รวม += t.amount; 
+                        คลาส_จำนวนเงิน = 'text-red-600'; 
+                        เครื่องหมาย = '-';
+                    } else if (t.category.includes('ค่าธรรมเนียม')) {
+                        ยอด_ลงทุน_สุทธิ -= t.amount; 
+                        ยอด_ค่าธรรมเนียม += t.amount;
+                        คลาส_จำนวนเงิน = 'text-red-600'; 
+                        เครื่องหมาย = '-';
+                    } else if (t.category.includes('เงินจากการขาย/ถอนคืน')) {
+                        ยอด_ลงทุน_สุทธิ += t.amount; 
+                        คลาส_จำนวนเงิน = 'text-green-600'; 
+                        เครื่องหมาย = '+';
+                    } else if (t.category.includes('กำไร')) {
+                        ยอด_ลงทุน_สุทธิ += t.amount; 
+                        ยอด_กำไร_รวม += t.amount;
+                        คลาส_จำนวนเงิน = 'text-green-600'; 
+                        เครื่องหมาย = '+';
+                    } 
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'transaction-row';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-amber-600 font-medium">${t.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${t.description || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${คลาส_จำนวนเงิน} font-bold text-right">${เครื่องหมาย}${จัดรูปแบบสกุลเงิน(t.amount)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="window.financeApp.จัดการลบประวัติ(${t.id})" class="delete-btn text-red-600 hover:text-red-900 transition duration-150" title="ลบ"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    `;
+                    ตาราง_body.appendChild(row);
+                });
+                
+                const กำไร_สุทธิ = ยอด_กำไร_รวม - ยอด_ค่าธรรมเนียม;
+                
+                // คำนวณเงินต้นทั้งหมดที่เคยจ่ายออกไปเพื่อการลงทุน (ไม่รวมค่าธรรมเนียม)
+                const ยอดเงินต้น_ที่ใช้คำนวณ_ROI = รายการ_ลงทุน
+                    .filter(t => t.category.includes('เงินต้น/ลงทุนเพิ่ม') || t.category.includes('ทรัพย์สินอื่นๆ')) 
+                    .reduce((sum, t) => sum + t.amount, 0);
+
+                let ROI = 0;
+                if (ยอดเงินต้น_ที่ใช้คำนวณ_ROI > 0) {
+                    ROI = (กำไร_สุทธิ / ยอดเงินต้น_ที่ใช้คำนวณ_ROI) * 100;
+                }
+                
+                document.getElementById('total-investment-net').textContent = จัดรูปแบบสกุลเงิน(ยอด_ลงทุน_สุทธิ);
+                document.getElementById('total-investment-in').textContent = จัดรูปแบบสกุลเงิน(ยอด_เงินต้น_รวม); 
+                document.getElementById('total-investment-profit').textContent = จัดรูปแบบสกุลเงิน(ยอด_กำไร_รวม); 
+                document.getElementById('total-investment-fee').textContent = จัดรูปแบบสกุลเงิน(ยอด_ค่าธรรมเนียม);
+                
+                document.getElementById('investment-roi').textContent = `${ROI.toFixed(2)} %`;
+                document.getElementById('investment-net-profit').textContent = จัดรูปแบบสกุลเงิน(กำไร_สุทธิ);
+                document.getElementById('investment-total-count').textContent = `${รายการ_ลงทุน.length} รายการ`;
+
+                // อัปเดตสีของ Card
+                const netFlowText = document.getElementById('total-investment-net');
+                netFlowText.classList.remove('text-blue-600', 'text-red-600', 'text-green-600');
+                if (ยอด_ลงทุน_สุทธิ > 0) netFlowText.classList.add('text-green-600');
+                else if (ยอด_ลงทุน_สุทธิ < 0) netFlowText.classList.add('text-red-600');
+                else netFlowText.classList.add('text-blue-600');
+
+                const netProfitText = document.getElementById('investment-net-profit');
+                netProfitText.classList.remove('text-red-600', 'text-green-600');
+                netProfitText.classList.add(กำไร_สุทธิ >= 0 ? 'text-green-600' : 'text-red-600');
+
+                const roiText = document.getElementById('investment-roi');
+                roiText.classList.remove('text-red-600', 'text-purple-600');
+                roiText.classList.add(ROI >= 0 ? 'text-purple-600' : 'text-red-600');
+
+
+                แสดงแผนภูมิลงทุน(รายการ_ลงทุน);
+            }
+            
+            function แสดงแผนภูมิลงทุน(transactions) {
+                if (แผนภูมิลงทุน_instance) แผนภูมิลงทุน_instance.destroy();
+
+                const ยอดรวม_ตามเดือน = {}; 
+                const today = new Date();
+                const labels = [];
+                
+                // สร้าง Label ย้อนหลัง 12 เดือน (รวมเดือนปัจจุบัน)
+                for (let i = 11; i >= 0; i--) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    labels.push(d.toISOString().slice(0, 7));
+                    ยอดรวม_ตามเดือน[labels[labels.length - 1]] = { NetFlow: 0 }; // เตรียมโครงสร้าง
+                }
+                
+                transactions.forEach(t => {
+                    const monthKey = t.date.slice(0, 7);
+                    if (ยอดรวม_ตามเดือน.hasOwnProperty(monthKey)) {
+                         // เงินเข้า (กำไร/ขายคืน)
+                        if (t.category.includes('เงินจากการขาย/ถอนคืน') || t.category.includes('กำไร')) {
+                            ยอดรวม_ตามเดือน[monthKey].NetFlow += t.amount;
+                        } 
+                        // เงินออก (เงินต้น/ค่าธรรมเนียม/ซื้อสินทรัพย์)
+                        else {
+                            ยอดรวม_ตามเดือน[monthKey].NetFlow -= t.amount;
+                        }
+                    }
+                });
+                
+                let ยอดสะสม_ปัจจุบัน = 0;
+                const netFlowCumulativeData = []; 
+
+                labels.forEach(monthKey => {
+                    ยอดสะสม_ปัจจุบัน += ยอดรวม_ตามเดือน[monthKey].NetFlow;
+                    netFlowCumulativeData.push(ยอดสะสม_ปัจจุบัน);
+                });
+                
+                let องค์ประกอบ_canvas = document.getElementById('investmentLineChart');
+                const emptyState = document.getElementById('investment-chart-empty');
+                
+                if (transactions.length === 0) {
+                     องค์ประกอบ_canvas.classList.add('hidden');
+                     emptyState.classList.remove('hidden');
+                     return;
+                }
+                องค์ประกอบ_canvas.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+
+                const ctx = องค์ประกอบ_canvas.getContext('2d');
+                
+                แผนภูมิลงทุน_instance = new Chart(ctx, {
+                    type: 'line', 
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            { 
+                                label: 'ยอดรวมสุทธิสะสม (฿)', 
+                                data: netFlowCumulativeData, 
+                                borderColor: '#3B82F6', 
+                                backgroundColor: 'rgba(59, 130, 246, 0.4)', 
+                                fill: true, 
+                                yAxisID: 'y', 
+                                tension: 0.3, 
+                                pointRadius: 5,
+                                pointBackgroundColor: '#3B82F6',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, 
+                        plugins: { legend: { position: 'top', labels: { boxWidth: 15 } }, title: { display: false } },
+                        scales: {
+                            x: { title: { display: true, text: 'เดือน' } }, 
+                            y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'ยอดสะสมสุทธิ (฿)' }, ticks: { color: '#4B5563', callback: (value) => จัดรูปแบบสกุลเงิน(value).replace('฿ ', '') } },
+                        }
+                    }
+                });
+            }
+
+
+            // --- 8. Logic ประวัติ (History Logic) ---
+
+            function เติมตัวกรองหมวดหมู่() {
+                const ตัวกรอง_หมวดหมู่ = document.getElementById('filter-category');
+                const selectedValue = ตัวกรอง_หมวดหมู่.value; 
+
+                ตัวกรอง_หมวดหมู่.innerHTML = '<option value="">-- กรองตามหมวดหมู่ --</option>';
+                // รวมหมวดหมู่ทั้งหมด
+                const หมวดหมู่_ทั้งหมด = [...หมวดหมู่['รายรับ'], ...หมวดหมู่['รายจ่าย'], ...หมวดหมู่['ลงทุน']].sort();
+                หมวดหมู่_ทั้งหมด.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    if (cat === selectedValue) {
+                         option.selected = true;
+                    }
+                    ตัวกรอง_หมวดหมู่.appendChild(option);
+                });
+            }
+            
+            function กรองและแสดงผลประวัติ() {
+                
+                const เดือน_ปี_ที่เลือก = document.getElementById('filter-month-year').value;
+                const หมวดหมู่_ที่เลือก = document.getElementById('filter-category').value;
+                const ประเภท_ที่เลือก = document.getElementById('filter-type').value;
+                const คำค้นหา = document.getElementById('search-description').value.toLowerCase();
+                
+                // โหลดข้อมูลล่าสุดเสมอ
+                โหลดรายการ(); 
+                
+                const รายการ_ที่กรองแล้ว = รายการ_ทั้งหมด
+                    .filter(t => {
+                        const matchMonth = !เดือน_ปี_ที่เลือก || t.date.startsWith(เดือน_ปี_ที่เลือก);
+                        const matchCategory = !หมวดหมู่_ที่เลือก || t.category === หมวดหมู่_ที่เลือก;
+                        const matchType = !ประเภท_ที่เลือก || t.type === ประเภท_ที่เลือก;
+                        const matchSearch = !คำค้นหา || (t.description.toLowerCase().includes(คำค้นหา) || t.category.toLowerCase().includes(คำค้นหา));
+                        return matchMonth && matchCategory && matchType && matchSearch;
+                    })
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                แสดงรายการในตาราง(รายการ_ที่กรองแล้ว);
+            }
+
+            function แสดงรายการในตาราง(transactions) {
+                const รายการ_ตาราง = document.getElementById('transaction-list');
+                รายการ_ตาราง.innerHTML = '';
+                
+                if (transactions.length === 0) {
+                    รายการ_ตาราง.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500"><i class="fas fa-search-minus mr-2 text-3xl mb-1 text-gray-300"></i><p>ไม่พบรายการในช่วงเวลาที่กำหนด</p></td></tr>';
+                    return;
+                }
+
+                transactions.forEach(t => {
+                    let คลาส_จำนวนเงิน = 'text-gray-900';
+                    let คลาส_ประเภท = 'text-gray-500';
+                    let ไอคอน_ประเภท = 'fas fa-question-circle';
+                    let เครื่องหมาย_จำนวนเงิน = '';
+
+                    if (t.type === 'รายรับ') {
+                        คลาส_จำนวนเงิน = 'text-green-600';
+                        คลาส_ประเภท = 'text-green-500';
+                        ไอคอน_ประเภท = 'fas fa-arrow-circle-up';
+                        เครื่องหมาย_จำนวนเงิน = '+';
+                    } else if (t.type === 'รายจ่าย') {
+                        คลาส_จำนวนเงิน = 'text-red-600';
+                        คลาส_ประเภท = 'text-red-500';
+                        ไอคอน_ประเภท = 'fas fa-arrow-circle-down';
+                        เครื่องหมาย_จำนวนเงิน = '-';
+                    } else if (t.type === 'ลงทุน') {
+                        คลาส_จำนวนเงิน = 'text-amber-600';
+                        คลาส_ประเภท = 'text-amber-500';
+                        ไอคอน_ประเภท = 'fas fa-chart-line';
+                        
+                        if (t.category.includes('กำไร') || t.category.includes('เงินจากการขาย/ถอนคืน')) {
+                             เครื่องหมาย_จำนวนเงิน = '+';
+                        } else { 
+                             เครื่องหมาย_จำนวนเงิน = '-';
+                        }
+                    }
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'transaction-row';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${t.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${คลาส_ประเภท} font-semibold flex items-center"><i class="${ไอคอน_ประเภท} mr-2"></i> ${t.type}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${t.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${คลาส_จำนวนเงิน} font-extrabold text-right">${เครื่องหมาย_จำนวนเงิน}${จัดรูปแบบสกุลเงิน(t.amount)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">${t.description || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                            <button onclick="alert('ฟังก์ชันแก้ไขรายการ ID: ${t.id} ยังไม่ได้ถูกนำมาใช้')" class="edit-btn text-blue-600 hover:text-blue-900 transition duration-150" title="แก้ไข"><i class="fas fa-edit"></i></button>
+                            <button onclick="window.financeApp.จัดการลบประวัติ(${t.id})" class="delete-btn text-red-600 hover:text-red-900 transition duration-150" title="ลบ"><i class="fas fa-trash-alt"></i></button>
+                        </td>
+                    `;
+                    รายการ_ตาราง.appendChild(row);
+                });
+            }
+            
+            function จัดการลบประวัติ(id) {
+                if (confirm('คุณต้องการลบรายการนี้จริงหรือไม่?')) {
+                    ลบรายการ(id);
+                    // อัปเดต View ที่เกี่ยวข้องทั้งหมด
+                    if (มุมมอง_ปัจจุบัน === 'history') กรองและแสดงผลประวัติ(); 
+                    if (มุมมอง_ปัจจุบัน === 'investment') โหลดข้อมูลการลงทุน();
+                    โหลดข้อมูลหน้าหลัก();
+                }
+            }
+
+            function โหลดประวัติรายการ() {
+                เติมตัวกรองหมวดหมู่();
+                กรองและแสดงผลประวัติ();
+            }
+            
+            // --- 9. Logic รายงาน (Reports Logic) ---
+
+            function สร้างรายงาน() {
+                const อินพุต_เดือน_ปี = document.getElementById('report-month-year');
+                // กำหนดค่าเริ่มต้นเป็นเดือนปัจจุบัน
+                const เดือน_ปี_ที่เลือก_เริ่มต้น = new Date().toISOString().slice(0, 7);
+                const เดือน_ปี_ที่เลือก = อินพุต_เดือน_ปี.value || เดือน_ปี_ที่เลือก_เริ่มต้น;
+                อินพุต_เดือน_ปี.value = เดือน_ปี_ที่เลือก; 
+                
+                const [ปี, เดือน] = เดือน_ปี_ที่เลือก.split('-');
+                
+                // กรองข้อมูลเฉพาะเดือนที่เลือก (ไม่รวมลงทุน)
+                const รายการ_ที่กรองแล้ว = รายการ_ทั้งหมด.filter(t => t.date.startsWith(เดือน_ปี_ที่เลือก) && t.type !== 'ลงทุน');
+
+                let รายรับ_รวม = 0;
+                let รายจ่าย_รวม = 0;
+
+                รายการ_ที่กรองแล้ว.forEach(t => {
+                    if (t.type === 'รายรับ') รายรับ_รวม += t.amount;
+                    else รายจ่าย_รวม += t.amount;
+                });
+
+                const ยอดคงเหลือ_สุทธิ = รายรับ_รวม - รายจ่าย_รวม;
+                
+                const วัตถุ_วันที่ = new Date(ปี, เดือน - 1);
+                document.getElementById('report-title').innerHTML = `<i class="fas fa-scroll mr-3 text-orange-500"></i> รายงานประจำเดือน ${วัตถุ_วันที่.toLocaleDateString('th-TH', { year: 'numeric', month: 'long' })}`;
+                document.getElementById('report-income').textContent = จัดรูปแบบสกุลเงิน(รายรับ_รวม);
+                document.getElementById('report-expense').textContent = จัดรูปแบบสกุลเงิน(รายจ่าย_รวม);
+                
+                const รายงาน_สุทธิ = document.getElementById('report-net');
+                รายงาน_สุทธิ.textContent = จัดรูปแบบสกุลเงิน(ยอดคงเหลือ_สุทธิ);
+                รายงาน_สุทธิ.classList.remove('text-red-600', 'text-blue-600', 'text-green-600');
+                รายงาน_สุทธิ.classList.add(ยอดคงเหลือ_สุทธิ > 0 ? 'text-green-600' : ยอดคงเหลือ_สุทธิ < 0 ? 'text-red-600' : 'text-blue-600');
+
+
+                แสดงแผนภูมิเปรียบเทียบ(); // แสดงกราฟย้อนหลัง 12 เดือน
+            }
+
+            function แสดงแผนภูมิเปรียบเทียบ() {
+                if (แผนภูมิเปรียบเทียบ_instance) แผนภูมิเปรียบเทียบ_instance.destroy();
+                
+                // คำนวณข้อมูลย้อนหลัง 12 เดือน (รายรับ, รายจ่าย)
+                const today = new Date();
+                const labels = [];
+                const incomeData = [];
+                const expenseData = [];
+                const monthlyData = {};
+                
+                // สร้าง Labels ย้อนหลัง 12 เดือน
+                for (let i = 11; i >= 0; i--) {
+                    const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                    const monthKey = d.toISOString().slice(0, 7);
+                    labels.push(monthKey);
+                    monthlyData[monthKey] = { income: 0, expense: 0 };
+                }
+
+                // รวบรวมข้อมูล
+                รายการ_ทั้งหมด.filter(t => t.type !== 'ลงทุน').forEach(t => {
+                    const monthKey = t.date.slice(0, 7);
+                    if (monthlyData.hasOwnProperty(monthKey)) {
+                         if (t.type === 'รายรับ') monthlyData[monthKey].income += t.amount;
+                         else monthlyData[monthKey].expense += t.amount;
+                    }
+                });
+                
+                // จัดเรียงข้อมูลตาม Labels
+                labels.forEach(monthKey => {
+                    incomeData.push(monthlyData[monthKey].income);
+                    expenseData.push(monthlyData[monthKey].expense);
+                });
+                
+                let องค์ประกอบ_canvas = document.getElementById('comparisonChart');
+                const emptyState = document.getElementById('comparison-chart-empty');
+                
+                if (labels.every((_, i) => incomeData[i] === 0 && expenseData[i] === 0)) {
+                     องค์ประกอบ_canvas.classList.add('hidden');
+                     emptyState.classList.remove('hidden');
+                     return;
+                }
+                องค์ประกอบ_canvas.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+
+
+                const ctx = องค์ประกอบ_canvas.getContext('2d');
+                
+                แผนภูมิเปรียบเทียบ_instance = new Chart(ctx, {
+                    type: 'line', // เปลี่ยนเป็น Line Chart เพื่อดู Flow
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'รายรับ (฿)',
+                                data: incomeData,
+                                borderColor: '#48BB78', 
+                                backgroundColor: 'rgba(72, 187, 120, 0.2)',
+                                fill: false,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'รายจ่าย (฿)',
+                                data: expenseData,
+                                borderColor: '#EF4444', 
+                                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                fill: false,
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, 
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: { display: false }
+                        },
+                        scales: { 
+                            y: { 
+                                beginAtZero: true,
+                                title: { display: true, text: 'จำนวนเงิน (฿)' },
+                                ticks: { callback: (value) => จัดรูปแบบสกุลเงิน(value).replace('฿ ', '') }
+                            },
+                            x: {
+                                 title: { display: true, text: 'เดือน' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // --- 10. Logic การพิมพ์ (Print Logic) ---
+            
+            function พิมพ์ส่วน(elementId) {
+                // สร้างภาชนะสำหรับเนื้อหาที่พิมพ์
+                const printContent = document.getElementById(elementId).cloneNode(true);
+                printContent.id = 'print-area-content'; 
+                
+                let หัวข้อ = 'สรุปรายงานการเงิน';
+                if (elementId === 'investment-report-area') { 
+                    หัวข้อ = 'รายงานสรุปการลงทุน/ทรัพย์สิน';
+                } else if (document.getElementById('report-title')) {
+                    หัวข้อ = document.getElementById('report-title').textContent.replace('รายงานประจำเดือน', 'รายงานสรุปการเงินประจำเดือน'); 
+                }
+
+                const ผู้ใช้ = localStorage.getItem(คีย์_ผู้ใช้ปัจจุบัน);
+                const { ชื่อ_แสดง } = โหลดข้อมูลเฉพาะผู้ใช้(ผู้ใช้);
+
+                const หัวรายงาน = `
+                    <div style="text-align: center; margin-bottom: 20px; padding-top: 20px; font-family: 'Segoe UI', Tahoma, Geneva, sans-serif;">
+                        <h1 style="color: #059669; font-size: 28px; font-weight: bold;"><i class="fas fa-file-invoice-dollar mr-2"></i> MyFinance Tracker Report</h1>
+                        <h2 style="font-size: 1.8em; margin: 10px 0; color: #333;">${หัวข้อ}</h2>
+                        <p style="font-size: 14px; margin-top: 5px; color: #555;">สร้างโดย: ${ชื่อ_แสดง} | บัญชี: ${ผู้ใช้} | วันที่: ${new Date().toLocaleDateString('th-TH', { dateStyle: 'long', timeStyle: 'short' })}</p>
+                        <hr style="border: 1px solid #ddd; margin-top: 15px; margin-bottom: 20px;">
+                    </div>
+                `;
+
+                // แอบซ่อน Body เดิมแล้วแทนที่ด้วยเนื้อหาสำหรับพิมพ์
+                const originalBody = document.body.innerHTML;
+                document.body.innerHTML = หัวรายงาน + printContent.outerHTML;
+                
+                // ปรับปรุง Chart Render (Chart.js V3+ ต้องการการปรับปรุงเป็นพิเศษเมื่อพิมพ์)
+                window.print();
+
+                // คืนค่า Body เดิม
+                document.body.innerHTML = originalBody;
+                window.location.reload(); // บังคับโหลดใหม่เพื่อคืนค่า Chart Instances และ Listeners
+            }
+            
+            // --- 11. Logic ตั้งค่าโปรไฟล์ (Profile Settings Logic) ---
+
+            function โหลดข้อมูลโปรไฟล์() {
+                const email = localStorage.getItem(คีย์_ผู้ใช้ปัจจุบัน);
+                const { ชื่อ_แสดง, รูป_โปรไฟล์ } = โหลดข้อมูลเฉพาะผู้ใช้(email); 
+
+                document.getElementById('profile-email-display').textContent = email;
+                document.getElementById('new-display-name').value = ชื่อ_แสดง;
+                document.getElementById('current-profile-pic').src = รูป_โปรไฟล์;
+
+                document.getElementById('profile-settings-form').onsubmit = จัดการบันทึกโปรไฟล์;
+            }
+
+            function จัดการบันทึกโปรไฟล์(e) {
+                e.preventDefault();
+                const email = localStorage.getItem(คีย์_ผู้ใช้ปัจจุบัน);
+                const อินพุต_ชื่อ = document.getElementById('new-display-name');
+                const อินพุต_รูป = document.getElementById('profile-pic-input');
+                
+                const { keyDisplayName, keyProfilePic } = โหลดข้อมูลเฉพาะผู้ใช้(email);
+
+                let isNameUpdated = false;
+                let isPicUpdated = false;
+
+                const ชื่อ_ใหม่ = อินพุต_ชื่อ.value.trim();
+                if (ชื่อ_ใหม่ && ชื่อ_ใหม่ !== localStorage.getItem(keyDisplayName)) {
+                    localStorage.setItem(keyDisplayName, ชื่อ_ใหม่);
+                    isNameUpdated = true;
+                }
+
+                const file = อินพุต_รูป.files[0];
+                if (file) {
+                    loadImage(
+                        file,
+                        function (img) {
+                            let dataURL = img.toDataURL('image/jpeg', 0.8);
+                            
+                            localStorage.setItem(keyProfilePic, dataURL); 
+                            isPicUpdated = true;
+                            
+                            // อัปเดต Nav Bar และ Profile View
+                            ตรวจสอบสถานะผู้ใช้(); 
+                            โหลดข้อมูลโปรไฟล์();
+                            แสดงข้อความแจ้งเตือน('profile-message-area', 'บันทึกโปรไฟล์และรูปภาพเรียบร้อย!', 'success');
+                            อินพุต_รูป.value = ''; 
+                        },
+                        {
+                            maxWidth: 200, maxHeight: 200, canvas: true, orientation: true 
+                        }
+                    );
+                } 
+                
+                if (!file) {
+                     if (isNameUpdated) {
+                        ตรวจสอบสถานะผู้ใช้();
+                        โหลดข้อมูลโปรไฟล์();
+                        แสดงข้อความแจ้งเตือน('profile-message-area', 'บันทึกชื่อที่ใช้แสดงเรียบร้อย!', 'success');
+                    } else if (!isPicUpdated) {
+                        แสดงข้อความแจ้งเตือน('profile-message-area', 'ไม่มีการเปลี่ยนแปลงใดๆ ที่จะบันทึก', 'error');
+                    }
+                }
+            }
+            
+            // --- 12. Logic ล้างข้อมูลทั้งหมด (Reset Data Logic) ---
+
+            function ยืนยันการลบข้อมูลทั้งหมด(viewContext) {
+                โหลดรายการ(); 
+                const displayName = localStorage.getItem(รับUserKey('_display_name')) || 'ผู้ใช้ปัจจุบัน';
+                let message = '';
+                
+                if (viewContext === 'investment') {
+                    message = `คำเตือน: นี่คือการลบข้อมูลธุรกรรมประเภท 'ลงทุน' ทั้งหมดของคุณ (${displayName}) อย่างถาวร! คุณแน่ใจหรือไม่?`;
+                } else if (viewContext === 'history') {
+                    message = `คำเตือน: นี่คือการลบข้อมูลธุรกรรมทั้งหมดของคุณ (${displayName}) ทั้งหมด (รายรับ, รายจ่าย, ลงทุน) อย่างถาวร! คุณแน่ใจหรือไม่?`;
+                } else {
+                     return; 
+                }
+                
+                const isConfirmed = confirm(message);
+
+                if (isConfirmed) {
+                    const isDoubleConfirmed = confirm("การดำเนินการนี้ไม่สามารถย้อนกลับได้! ยืนยันการลบข้อมูล (ใช่/ยกเลิก)?");
+                    
+                    if (isDoubleConfirmed) {
+                        let itemsDeleted = 0;
+
+                        if (viewContext === 'investment') {
+                            const itemsToKeep = รายการ_ทั้งหมด.filter(t => t.type !== 'ลงทุน');
+                            itemsDeleted = รายการ_ทั้งหมด.length - itemsToKeep.length;
+                            รายการ_ทั้งหมด = itemsToKeep;
+                            บันทึกรายการ();
+
+                        } else if (viewContext === 'history') {
+                            itemsDeleted = รายการ_ทั้งหมด.length;
+                            รายการ_ทั้งหมด = [];
+                            บันทึกรายการ();
+                            localStorage.removeItem(รับUserKey('_initialized')); 
+                        }
+
+                        if (itemsDeleted > 0 || viewContext === 'history') {
+                            alert(`ข้อมูล ${viewContext === 'investment' ? 'การลงทุน' : 'ทั้งหมด'} ถูกลบเรียบร้อยแล้ว! (${itemsDeleted} รายการ)`);
+                        } else {
+                            alert('ไม่มีข้อมูลให้ลบในส่วนนี้');
+                        }
+                        
+                        // รีเซ็ตการแสดงผล
+                        เปลี่ยนมุมมอง(viewContext);
+                        โหลดข้อมูลหน้าหลัก(); 
+                    }
+                }
+            }
+
+            // --- 13. การเริ่มต้นและ Listener (Initialization & Listeners) ---
+
+            function เริ่มต้นแอปพลิเคชัน() {
+                // Binding Events 
+                document.getElementById('apply-filter-btn').addEventListener('click', กรองและแสดงผลประวัติ);
+                document.getElementById('generate-report-btn').addEventListener('click', สร้างรายงาน);
+                document.getElementById('export-csv-btn').addEventListener('click', () => alert("ฟังก์ชันส่งออก CSV ยังไม่ได้ถูกนำมาใช้ในตัวอย่างนี้"));
+                
+                // Binding Nav Events
+                document.querySelectorAll('[data-view]').forEach(element => {
+                    element.addEventListener('click', (e) => {
+                        const viewId = e.currentTarget.dataset.view;
+                        if (viewId === 'logout') {
+                            จัดการออกจากระบบ();
+                        } else {
+                            เปลี่ยนมุมมอง(viewId);
+                        }
+                    });
+                });
+                
+                // Binding Auth Events
+                document.getElementById('login-form').addEventListener('submit', จัดการเข้าสู่ระบบ);
+                document.getElementById('register-form').addEventListener('submit', จัดการสมัครสมาชิก);
+
+                // เริ่มต้นตรวจสอบสถานะผู้ใช้
+                ตรวจสอบสถานะผู้ใช้(); 
+            }
+            
+            // Public API สำหรับการเรียกใช้จาก Global Scope (เช่น ปุ่มลบในตาราง)
+            window.financeApp = {
+                จัดการลบประวัติ: จัดการลบประวัติ,
+                ยืนยันการลบข้อมูลทั้งหมด: ยืนยันการลบข้อมูลทั้งหมด
+            };
+
+            เริ่มต้นแอปพลิเคชัน();
+        })();
+    </script>
+</body>
+</html>
